@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Central de Alterações</title>
+<style>
+  :root {
+    --primary: #2563eb; --primary-hover: #1d4ed8;
+    --bg: #f8fafc; --surface: #ffffff;
+    --text: #1f2937; --text-light: #6b7280;
+    --border: #e2e8f0; --border-dark: #cbd5e1;
+    --success: #10b981; --warning: #f59e0b;
+  }
+
+  /* ========== MODO ESCURO ========== */
+  [data-theme="dark"] {
+    --bg: #121212; --surface: #1e1e1e;
+    --text: #e2e8f0; --text-light: #94a3b8;
+    --border: #334155; --border-dark: #475569;
+  }
+  [data-theme="dark"] body { background-color: var(--bg); }
+  [data-theme="dark"] input[type="text"], [data-theme="dark"] textarea { background-color: #2c2c2c; color: #fff; }
+  [data-theme="dark"] input[type="text"].campo-preenchido, [data-theme="dark"] textarea.campo-preenchido { background-color: #064e3b; border-color: var(--success); }
+  [data-theme="dark"] .btn-secondary { background-color: #2c2c2c; color: var(--text); border-color: var(--border-dark); }
+  [data-theme="dark"] .btn-secondary:hover { background-color: #3d3d3d; }
+  [data-theme="dark"] .container { background-color: var(--surface); border-color: var(--border); box-shadow: none; }
+  [data-theme="dark"] .checkbox-grid, [data-theme="dark"] .info-box { background-color: #121212; border-color: var(--border); }
+  [data-theme="dark"] label { color: var(--text-light); }
+  [data-theme="dark"] .toggle-btn { background-color: #2c2c2c; }
+  [data-theme="dark"] .toggle-btn.active { background-color: var(--primary); color: white; }
+  [data-theme="dark"] .tab-btn:hover, [data-theme="dark"] .tab-btn.active { color: #60a5fa; border-bottom-color: #60a5fa; }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  body { background-color: var(--bg); color: var(--text); padding: 30px; transition: 0.3s; }
+  
+  .header { display: flex; justify-content: space-between; align-items: center; max-width: 900px; margin: 0 auto 20px auto; }
+  .header h1 { font-size: 1.5rem; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+  .btn-theme-toggle { background-color: transparent; color: var(--text); border: 1px solid var(--border-dark); padding: 5px 8px; border-radius: 4px; font-size: 1.1rem; cursor: pointer; transition: 0.2s; }
+  .btn-theme-toggle:hover { background-color: var(--border); }
+
+  .container { max-width: 900px; margin: 0 auto; background: var(--surface); border-radius: 8px; border: 1px solid var(--border); padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+
+  .tabs-header { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 25px; flex-wrap: wrap; }
+  .tab-btn { padding: 12px 20px; cursor: pointer; border: none; background: none; font-weight: 600; font-size: 0.9rem; color: var(--text-light); border-bottom: 2px solid transparent; margin-bottom: -2px; transition: 0.2s; }
+  .tab-btn:hover { color: var(--primary); }
+  .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .row-split { display: grid; gap: 20px; align-items: start; margin-bottom: 15px; }
+  .form-group { display: flex; flex-direction: column; }
+  label { font-size: 0.75rem; font-weight: 800; margin-bottom: 4px; color: #000; text-transform: uppercase; }
+  
+  /* Inputs padrão em MAIÚSCULO, mas ignorar E-mails e Motivo/Resultado da Retenção */
+  input[type="text"]:not(#osEmail):not(#retMotivo),
+  textarea:not(#msgResultado):not(#osResultado):not(#retMotivo) {
+      text-transform: uppercase;
+  }
+
+  input[type="text"], textarea { padding: 10px; border: 1px solid var(--border-dark); border-radius: 4px; font-size: 0.85rem; outline: none; transition: 0.2s; width: 100%; }
+  input[type="text"]:focus, textarea:focus { border-color: var(--primary); }
+  input[type="text"].campo-preenchido, textarea.campo-preenchido { border-color: var(--success); background-color: #f0fdf4; }
+  
+  .toggle-group { display: flex; gap: 5px; flex-wrap: wrap; }
+  .toggle-btn { padding: 8px 16px; border: 1px solid var(--border-dark); background: #f8fafc; border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-weight: bold; color: var(--text-light); transition: all 0.2s; }
+  .toggle-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+  .checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; background: var(--bg); padding: 15px; border-radius: 6px; border: 1px solid var(--border); }
+  .checkbox-item { display: flex; align-items: flex-start; gap: 6px; font-size: 0.8rem; color: var(--text); cursor: pointer; text-transform: none; font-weight: normal; margin-bottom: 0; }
+  .checkbox-item input[type="checkbox"] { margin-top: 2px; accent-color: var(--primary); cursor: pointer; width: 14px; height: 14px; }
+
+  .info-box { background: #3b82f615; border: 1px solid #3b82f640; border-radius: 6px; padding: 12px; font-size: 0.8rem; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+  .info-box input[type="checkbox"] { accent-color: var(--warning); cursor: pointer; width: 16px; height: 16px; }
+
+  .btn { border: none; border-radius: 4px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+  .btn-primary { background-color: var(--primary); color: white; padding: 10px 30px; font-size: 0.95rem; }
+  .btn-primary:hover { background-color: var(--primary-hover); }
+  .btn-secondary { background-color: var(--bg); border: 1px solid var(--border-dark); color: var(--text); padding: 10px 20px; font-size: 0.85rem; }
+  .btn-secondary:hover { background-color: #e2e8f0; }
+  .btn-salvar { background-color: var(--primary); color: white; border: none; padding: 10px 25px; font-size: 0.9rem; border-radius: 4px; cursor: pointer; }
+  .btn-salvar:hover { background-color: var(--primary-hover); }
+
+  .toast { position: fixed; bottom: 20px; right: 20px; background-color: #333; color: white; padding: 10px 20px; border-radius: 5px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 1000; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🔄 Central de Alterações</h1>
+  <button class="btn-theme-toggle" onclick="toggleTheme()" id="btnThemeToggle" title="Alternar Modo Escuro/Claro">🌙</button>
+</div>
+
+<div class="container">
+  <div class="tabs-header">
+    <button class="tab-btn active" onclick="switchTab(this, 'abaMensagem')">📱 Mensagem Cliente</button>
+    <button class="tab-btn" onclick="switchTab(this, 'abaOS')">📋 O.S Alteração</button>
+    <button class="tab-btn" onclick="switchTab(this, 'abaTransferencia')">🚚 Transferência</button>
+    <button class="tab-btn" onclick="switchTab(this, 'abaRetencao')">🛑 Retenção</button>
+  </div>
+
+  <!-- ================= ABA 1: MENSAGEM CLIENTE ================= -->
+  <div id="abaMensagem" class="tab-content active">
+    <div class="info-box">
+      <input type="checkbox" id="syncTabs" onchange="sincronizarAbas()" checked>
+      <label for="syncTabs" style="color: inherit; text-transform:none; margin:0; font-weight:600;">Utilizar esses planos, valores e aplicativos para gerar a O.S na outra aba.</label>
+    </div>
+
+    <div class="row-split" style="grid-template-columns: 1fr 1fr;">
+      <div class="form-group"><label>Plano Antigo</label><input type="text" id="msgPlanoAntigo" placeholder="Ex: Basic" oninput="sincronizarAbas()"></div>
+      <div class="form-group"><label>Preço Antigo</label><input type="text" id="msgPrecoAntigo" placeholder="Ex: R$ 89,90" oninput="aplicarMascaraMoeda(this); sincronizarAbas()"></div>
+    </div>
+    <div class="row-split" style="grid-template-columns: 1fr 1fr;">
+      <div class="form-group"><label>Novo Plano</label><input type="text" id="msgNovoPlano" placeholder="Ex: Pro" oninput="sincronizarAbas()"></div>
+      <div class="form-group"><label>Preço Novo</label><input type="text" id="msgPrecoNovo" placeholder="Ex: R$ 119,90" oninput="aplicarMascaraMoeda(this); sincronizarAbas()"></div>
+    </div>
+    <div class="row-split" style="grid-template-columns: 1fr 1fr;">
+      <div class="form-group"><label>Velocidade (ex: 500 Mega)</label><input type="text" id="msgVelocidade" placeholder="Ex: 500 Mega"></div>
+      <div class="form-group"><label>Número de Canais (ex: 56 ou 98)</label><input type="text" id="msgCanais" placeholder="Ex: 98"></div>
+    </div>
+
+    <label>Aplicativos que compõem o plano</label>
+    <div class="checkbox-grid">
+      <label class="checkbox-item"><input type="checkbox" class="msg-app" value="Mumo para ficar por dentro de podcasts e rádios" onchange="sincronizarAbas(true)"> Mumo</label>
+      <label class="checkbox-item"><input type="checkbox" class="msg-app" value="Bit Trainers, voltado para saúde e bem estar" onchange="sincronizarAbas(true)"> Bit Trainers</label>
+      <label class="checkbox-item"><input type="checkbox" class="msg-app" value="HBO MAX em até duas telas simultâneas" onchange="sincronizarAbas(true)"> HBO MAX</label>
+      <label class="checkbox-item"><input type="checkbox" class="msg-app" value="Disney+ em até duas telas simultâneas" onchange="sincronizarAbas(true)"> Disney+</label>
+      <label class="checkbox-item"><input type="checkbox" class="msg-app" value="Deezer para você ouvir suas músicas onde quiser (um usuário)" onchange="sincronizarAbas(true)"> Deezer</label>
+      <label class="checkbox-item"><input type="checkbox" class="msg-app" value="Premiere para acompanhar os melhores jogos" onchange="sincronizarAbas(true)"> Premiere</label>
+      <label class="checkbox-item"><input type="checkbox" class="msg-app" value="Globo Canais, com acesso a conteúdos como GNT, Multishow, Viva entre outros." onchange="sincronizarAbas(true)"> Globo Canais</label>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+      <button class="btn btn-secondary" onclick="limparCampos('abaMensagem')">Limpar Campos</button>
+      <button class="btn btn-primary" onclick="gerarTextoMensagem()">⬇️ Gerar Texto Abaixo ⬇️</button>
+    </div>
+
+    <textarea id="msgResultado" style="min-height: 150px; font-family: monospace; font-size:0.85rem; margin-bottom:15px;"></textarea>
+    
+    <div style="display: flex; justify-content: flex-end;">
+      <button class="btn-salvar" onclick="copiarTexto('msgResultado')">Copiar Mensagem</button>
+    </div>
+  </div>
+
+  <!-- ================= ABA 2: O.S ALTERAÇÃO ================= -->
+  <div id="abaOS" class="tab-content">
+    <div class="row-split" style="grid-template-columns: 1fr;">
+      <div class="form-group"><label>OBSERVAÇÃO (Específica da Instalação)</label><input type="text" id="osObs" placeholder="Ex: Cliente só está em casa após as 14h"></div>
+    </div>
+    
+    <div class="row-split" style="grid-template-columns: 1fr 1fr 1.5fr; align-items: end;">
+      <div class="form-group">
+        <label>Canal</label>
+        <div class="toggle-group" data-group="osCanal">
+          <button class="toggle-btn active" onclick="setToggle('osCanal', 'Telefone', this)">Tel</button>
+          <button class="toggle-btn" onclick="setToggle('osCanal', 'WhatsApp', this)">Wpp</button>
+        </div>
+      </div>
+      <div class="form-group"><label>Data da O.S</label><input type="text" id="osData" placeholder="DD/MM/AAAA" oninput="aplicarMascaraData(this)"></div>
+      <div class="form-group"><label>Vendedor</label><input type="text" id="osVendedor" value="Danilo de Souza"></div>
+    </div>
+
+    <div class="row-split" style="grid-template-columns: 1fr 1fr;">
+      <div class="form-group">
+        <label>Data de Agendamento</label>
+        <div style="display:flex; gap: 8px;">
+          <input type="text" id="osDataAgendamento" placeholder="DD/MM/AAAA" oninput="aplicarMascaraData(this)" style="flex:1;">
+          <div class="toggle-group" data-group="osTurno">
+            <button class="toggle-btn" onclick="setToggle('osTurno', 'Manhã', this)">M</button>
+            <button class="toggle-btn" onclick="setToggle('osTurno', 'Tarde', this)">T</button>
+          </div>
+        </div>
+      </div>
+      <div class="form-group"><label>Solicitante (Titular)</label><input type="text" id="osSolicitante" placeholder="Nome completo"></div>
+    </div>
+
+    <div class="row-split" style="grid-template-columns: 1fr 1fr;">
+      <div class="form-group"><label>Plano Atual</label><input type="text" id="osPlanoAntigo" placeholder="Ex: Basic"></div>
+      <div class="form-group"><label>Valor Atual</label><input type="text" id="osPrecoAntigo" placeholder="Ex: R$ 89,90" oninput="aplicarMascaraMoeda(this)"></div>
+    </div>
+    <div class="row-split" style="grid-template-columns: 1fr 1fr;">
+      <div class="form-group"><label>Novo Plano</label><input type="text" id="osNovoPlano" placeholder="Ex: Pro"></div>
+      <div class="form-group"><label>Novo Valor</label><input type="text" id="osPrecoNovo" placeholder="Ex: R$ 119,90" oninput="aplicarMascaraMoeda(this)"></div>
+    </div>
+
+    <div class="row-split" style="grid-template-columns: 1fr 1fr;">
+      <div class="form-group"><label>Instalar (Equipamentos)</label><input type="text" id="osInstalar" placeholder="Ex: Roteador"></div>
+      <div class="form-group">
+        <label>Recolher</label>
+        <div style="display: flex; gap: 5px;">
+           <input type="text" id="osRecolher" placeholder="Ex: ONT antiga" style="flex: 1;">
+           <button class="btn btn-secondary" onclick="document.getElementById('osRecolher').value='NADA A RECOLHER'" style="padding: 6px 12px; font-size: 0.75rem;">❌ Nada</button>
+        </div>
+      </div>
+    </div>
+
+    <label>Configurar Serviços e Aplicativos</label>
+    <div class="checkbox-grid">
+      <label class="checkbox-item"><input type="checkbox" class="os-check" data-tipo="servico" value="Smart Box"> Smart Box</label>
+      <label class="checkbox-item"><input type="checkbox" class="os-check" data-tipo="servico" value="WiFi - 360"> WiFi - 360</label>
+      <label class="checkbox-item"><input type="checkbox" class="os-check" data-tipo="servico" value="Transf. Ponto interno"> Transf. Ponto interno</label>
+      <label class="checkbox-item"><input type="checkbox" class="os-check" data-tipo="servico" value="Passagem Cabo"> Passagem Cabo</label>
+      
+      <label class="checkbox-item"><input type="checkbox" class="os-check" data-tipo="app" value="Mumo"> Mumo</label>
+      <label class="checkbox-item"><input type="checkbox" class="os-check" data-tipo="app" value="Bit Trainers"> Bit Trainers</label>
+      <label class="checkbox-item"><input type="checkbox" class="os-check" data-tipo="app" value="HBO MAX"> HBO MAX</label>
+      <label class="checkbox-item"><input type="checkbox" class="os-check" data-tipo="app" value="Disney+"> Disney+</label>
+      <label class="checkbox-item"><input type="checkbox" class="os-check" data-tipo="app" value="Deezer"> Deezer</label>
+      <label class="checkbox-item"><input type="checkbox" class="os-check" data-tipo="app" value="Premiere"> Premiere</label>
+      <label class="checkbox-item"><input type="checkbox" class="os-check" data-tipo="app" value="Globo Canais"> Globo Canais</label>
+      <label class="checkbox-item"><input type="checkbox" class="os-check" data-tipo="app" value="Globoplay"> Globoplay</label>
+    </div>
+
+    <div class="row-split" style="grid-template-columns: 1fr 1.5fr;">
+      <div class="form-group"><label>Telefone</label><input type="text" id="osTel" class="mask-contato" placeholder="(XX) XXXXX-XXXX" autocomplete="off"></div>
+      <div class="form-group"><label>E-mail</label><input type="text" id="osEmail" placeholder="cliente@email.com" autocomplete="off" style="text-transform: none;"></div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+      <button class="btn btn-secondary" onclick="limparCampos('abaOS')">Limpar Campos</button>
+      <button class="btn btn-primary" onclick="gerarTextoOS()">⬇️ Gerar O.S Abaixo ⬇️</button>
+    </div>
+
+    <textarea id="osResultado" style="min-height: 120px; font-family: monospace; font-size:0.85rem; margin-bottom:15px;"></textarea>
+    
+    <div style="display: flex; justify-content: flex-end;">
+      <button class="btn-salvar" onclick="copiarTexto('osResultado')">Copiar O.S</button>
+    </div>
+  </div>
+
+  <!-- ================= ABA 3: TRANSFERÊNCIA DE ENDEREÇO ================= -->
+  <div id="abaTransferencia" class="tab-content">
+    <div class="row-split" style="grid-template-columns: 1fr auto;">
+      <div class="form-group"><label>Nome do Cliente</label><input type="text" id="transfNome" placeholder="Nome completo"></div>
+      <div class="form-group">
+        <label>Canal</label>
+        <div class="toggle-group" data-group="transfCanal">
+          <button class="toggle-btn active" onclick="setToggle('transfCanal', 'Telefone', this)">Tel</button>
+          <button class="toggle-btn" onclick="setToggle('transfCanal', 'WhatsApp', this)">Wpp</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row-split" style="grid-template-columns: 150px 1fr 120px;">
+      <div class="form-group"><label>CEP</label><input type="text" id="transfCep" placeholder="XXXXX-XXX" maxlength="9" oninput="aplicarMascaraCep(this)"></div>
+      <div class="form-group"><label>Rua</label><input type="text" id="transfRua" placeholder="Nome da Rua"></div>
+      <div class="form-group"><label>Número</label><input type="text" id="transfNum" placeholder="Ex: 123"></div>
+    </div>
+
+    <div class="row-split" style="grid-template-columns: 1fr 1fr;">
+      <div class="form-group"><label>Complemento</label><input type="text" id="transfComp" placeholder="Apto, Casa, Bloco..."></div>
+      <div class="form-group"><label>Bairro</label><input type="text" id="transfBairro" placeholder="Nome do Bairro"></div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; margin-top:20px;">
+      <button class="btn btn-secondary" onclick="limparCampos('abaTransferencia')">Limpar Campos</button>
+      <button class="btn btn-primary" onclick="gerarTextoTransferencia()">⬇️ Gerar O.S Abaixo ⬇️</button>
+    </div>
+
+    <textarea id="transfResultado" style="min-height: 130px; font-family: monospace; font-size:0.85rem; margin-bottom:15px;"></textarea>
+    
+    <div style="display: flex; justify-content: flex-end;">
+      <button class="btn-salvar" onclick="copiarTexto('transfResultado')">Copiar O.S</button>
+    </div>
+  </div>
+
+  <!-- ================= ABA 4: RETENÇÃO ================= -->
+  <div id="abaRetencao" class="tab-content">
+    
+    <div class="row-split" style="grid-template-columns: 1fr;">
+      <div class="form-group">
+        <label>Classificação</label>
+        <div class="toggle-group" data-group="retClassificacao">
+          <button class="toggle-btn active" onclick="setToggle('retClassificacao', 'INFORMAÇÃO DE CANCELAMENTO', this)">Informação</button>
+          <button class="toggle-btn" onclick="setToggle('retClassificacao', 'SOLICITAÇÃO DE CANCELAMENTO', this)">Solicitação</button>
+          <button class="toggle-btn" onclick="setToggle('retClassificacao', 'POTENCIAL CANCELAMENTO', this)">Potencial</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row-split" style="grid-template-columns: 1fr;">
+      <div class="form-group">
+        <label>Cidade</label>
+        <div class="toggle-group" data-group="retCidade">
+          <button class="toggle-btn active" onclick="setToggle('retCidade', 'VIÇOSA', this)">Viçosa</button>
+          <button class="toggle-btn" onclick="setToggle('retCidade', 'CARATINGA', this)">Caratinga</button>
+          <button class="toggle-btn" onclick="setToggle('retCidade', 'TEIXEIRAS', this)">Teixeiras</button>
+          <button class="toggle-btn" onclick="setToggle('retCidade', 'SANTA RITA', this)">Santa Rita</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row-split" style="grid-template-columns: 1fr auto;">
+      <div class="form-group"><label>Nome do Cliente</label><input type="text" id="retNome" placeholder="Nome completo"></div>
+      <div class="form-group"><label>Contrato</label><input type="text" id="retContrato" placeholder="Ex: 14741"></div>
+    </div>
+
+    <div class="row-split" style="grid-template-columns: 1fr 1fr auto;">
+      <div class="form-group"><label>Protocolo</label><input type="text" id="retProtocolo" placeholder="Número do protocolo"></div>
+      <div class="form-group"><label>Telefone</label><input type="text" id="retTel" class="mask-contato" placeholder="(XX) XXXXX-XXXX"></div>
+      <div class="form-group">
+        <label>Meio de Contato</label>
+        <div class="toggle-group" data-group="retMeio">
+          <button class="toggle-btn active" onclick="setToggle('retMeio', 'TELEFONE', this)">Telefone</button>
+          <button class="toggle-btn" onclick="setToggle('retMeio', 'WHATSAPP', this)">WhatsApp</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Motivo Principal</label>
+      <textarea id="retMotivo" style="min-height: 80px; text-transform:none;" placeholder="Descreva o motivo do cancelamento ou potencial cancelamento..."></textarea>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; margin-top:20px;">
+      <button class="btn btn-secondary" onclick="limparCampos('abaRetencao')">Limpar Campos</button>
+      <button class="btn btn-primary" onclick="gerarTextoRetencao()">⬇️ Gerar Texto Abaixo ⬇️</button>
+    </div>
+
+    <textarea id="retResultado" style="min-height: 180px; font-family: monospace; font-size:0.85rem; margin-bottom:15px;"></textarea>
+    
+    <div style="display: flex; justify-content: flex-end;">
+      <button class="btn-salvar" onclick="copiarTexto('retResultado')">Copiar Texto</button>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast" class="toast">Texto copiado!</div>
+
+<script>
+/* ================= TEMA (LÊ AUTOMATICAMENTE DO LOCALSTORAGE COMPARTILHADO) ================= */
+function toggleTheme() {
+  const body = document.documentElement;
+  const btn = document.getElementById('btnThemeToggle');
+  if(body.getAttribute('data-theme') === 'dark') {
+    body.removeAttribute('data-theme');
+    localStorage.setItem('theme', 'light');
+    if(btn) btn.innerText = '🌙';
+  } else {
+    body.setAttribute('data-theme', 'dark');
+    localStorage.setItem('theme', 'dark');
+    if(btn) btn.innerText = '☀️';
+  }
+}
+
+if(localStorage.getItem('theme') === 'dark') {
+  document.documentElement.setAttribute('data-theme', 'dark');
+  const btn = document.getElementById('btnThemeToggle');
+  if(btn) btn.innerText = '☀️';
+}
+
+/* ================= LÓGICA DE ABAS E TOGGLES ================= */
+let estadoToggles = {
+  osCanal: 'TELEFONE', osTurno: '',
+  transfCanal: 'TELEFONE',
+  retClassificacao: 'INFORMAÇÃO DE CANCELAMENTO', retCidade: 'VIÇOSA', retMeio: 'TELEFONE'
+};
+
+function switchTab(btn, tabId) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+
+function setToggle(group, value, btnEl) {
+  if(btnEl.classList.contains('active') && group === 'osTurno') {
+     btnEl.classList.remove('active');
+     estadoToggles[group] = '';
+     return;
+  }
+  document.querySelectorAll(`.toggle-group[data-group="${group}"] .toggle-btn`).forEach(b => b.classList.remove('active'));
+  btnEl.classList.add('active');
+  estadoToggles[group] = value.toUpperCase();
+}
+
+/* ================= MÁSCARAS E UTILIDADES ================= */
+document.addEventListener('input', (e) => {
+  if((e.target.tagName === 'INPUT' && e.target.type === 'text') || e.target.tagName === 'TEXTAREA') {
+    if(e.target.value.trim() !== '') e.target.classList.add('campo-preenchido');
+    else e.target.classList.remove('campo-preenchido');
+  }
+  if(e.target.classList.contains('mask-contato')) aplicarMascaraContato(e.target);
+});
+
+function aplicarMascaraMoeda(i) {
+  let v = i.value.replace(/\D/g,'');
+  if(v === '') return;
+  v = (v/100).toFixed(2) + '';
+  v = v.replace(".", ",");
+  v = v.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,");
+  v = v.replace(/(\d)(\d{3}),/g, "$1.$2,");
+  i.value = v === "0,00" ? "" : "R$ " + v;
+}
+
+function aplicarMascaraData(el) {
+  let v = el.value.replace(/\D/g, '');
+  if (v.length > 8) v = v.slice(0, 8);
+  if (v.length > 4) v = v.replace(/(\d{2})(\d{2})(\d{1,4})/, '$1/$2/$3');
+  else if (v.length > 2) v = v.replace(/(\d{2})(\d{1,2})/, '$1/$2');
+  el.value = v;
+}
+
+function aplicarMascaraCep(el) {
+  let v = el.value.replace(/\D/g, '');
+  if (v.length > 5) v = v.replace(/^(\d{5})(\d)/, '$1-$2');
+  el.value = v;
+}
+
+function aplicarMascaraContato(el) {
+  let partes = el.value.split('/');
+  let formatado = partes.map(p => {
+    let n = p.replace(/\D/g, '');
+    if (n.startsWith('55') && (n.length === 12 || n.length === 13)) n = n.substring(2);
+    if (n.length === 0) return '';
+    if (n.length <= 2) return `(${n}`;
+    if (n.length <= 6) return `(${n.slice(0,2)}) ${n.slice(2)}`;
+    if (n.length <= 10) return `(${n.slice(0,2)}) ${n.slice(2,6)}-${n.slice(6)}`;
+    return `(${n.slice(0,2)}) ${n.slice(2,7)}-${n.slice(7,11)}`;
+  });
+  let res = formatado.join('/');
+  if (el.value.endsWith('/') && !el.value.endsWith('//') && !res.endsWith('/')) res += '/';
+  el.value = res;
+}
+
+function copiarTexto(elementId) {
+  const el = document.getElementById(elementId);
+  if(!el.value.trim()) return alert('Não há texto para copiar!');
+  navigator.clipboard.writeText(el.value).then(() => {
+    const toast = document.getElementById('toast');
+    toast.style.opacity = 1; 
+    setTimeout(() => toast.style.opacity = 0, 2000);
+  });
+}
+
+function limparCampos(abaId) {
+  const div = document.getElementById(abaId);
+  div.querySelectorAll('input[type="text"], textarea').forEach(el => { el.value = ''; el.classList.remove('campo-preenchido'); });
+  div.querySelectorAll('input[type="checkbox"]').forEach(el => el.checked = false);
+  
+  if (abaId === 'abaMensagem' || abaId === 'abaOS') {
+      document.getElementById('syncTabs').checked = true;
+      sincronizarAbas(true);
+  }
+}
+
+/* ================= LÓGICA DE GERAÇÃO: ABA 1 E 2 ================= */
+window.onload = function() {
+    const d = new Date();
+    document.getElementById('osData').value = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+};
+
+function sincronizarAbas(appMudou = false) {
+  const usarSync = document.getElementById('syncTabs').checked;
+  const osFields = ['osPlanoAntigo', 'osPrecoAntigo', 'osNovoPlano', 'osPrecoNovo'];
+  
+  if (usarSync) {
+    document.getElementById('osPlanoAntigo').value = document.getElementById('msgPlanoAntigo').value;
+    document.getElementById('osPrecoAntigo').value = document.getElementById('msgPrecoAntigo').value;
+    document.getElementById('osNovoPlano').value = document.getElementById('msgNovoPlano').value;
+    document.getElementById('osPrecoNovo').value = document.getElementById('msgPrecoNovo').value;
+    osFields.forEach(id => { document.getElementById(id).readOnly = true; document.getElementById(id).style.opacity = '0.7'; });
+
+    if (appMudou) {
+      const nomesCurtos = { "Mumo": "Mumo", "Bit Trainers": "Bit Trainers", "HBO MAX": "HBO MAX", "Disney+": "Disney+", "Deezer": "Deezer", "Premiere": "Premiere", "Globo Canais": "Globo Canais" };
+      document.querySelectorAll('.os-check[data-tipo="app"]').forEach(cb => cb.checked = false);
+      document.querySelectorAll('.msg-app:checked').forEach(cb => {
+         const txtLongo = cb.value;
+         for(let chave in nomesCurtos) {
+            if(txtLongo.includes(chave)) {
+               const checkOS = document.querySelector(`.os-check[data-tipo="app"][value="${nomesCurtos[chave]}"]`);
+               if(checkOS) checkOS.checked = true;
+            }
+         }
+      });
+    }
+  } else {
+    osFields.forEach(id => { document.getElementById(id).readOnly = false; document.getElementById(id).style.opacity = '1'; });
+  }
+}
+
+function gerarTextoMensagem() {
+  const pAntigo = (document.getElementById('msgPlanoAntigo').value.trim() || '[PLANO ANTIGO]').toUpperCase();
+  const pAntigoPreco = document.getElementById('msgPrecoAntigo').value.trim() || '[PREÇO 1]';
+  const pNovo = (document.getElementById('msgNovoPlano').value.trim() || '[NOVO PLANO]').toUpperCase();
+  const pNovoPreco = document.getElementById('msgPrecoNovo').value.trim() || '[PREÇO 2]';
+  const vel = (document.getElementById('msgVelocidade').value.trim() || '[VELOCIDADE PLANO]').toUpperCase();
+  const canais = document.getElementById('msgCanais').value.trim() || '[numero canais]';
+
+  let appsText = "";
+  document.querySelectorAll('.msg-app').forEach(box => { if(box.checked) appsText += `   ${box.value}\n`; });
+  const blocoMais = appsText ? `\n🥳 E AINDA TEM MUITO MAIS\n${appsText}\n` : "\n";
+
+  const template = `📢 ATUALIZAÇÃO IMPORTANTE!
+
+O seu plano ${pAntigo} ${pAntigoPreco} será atualizado para o ${pNovo} ${pNovoPreco}. 🎉 Agora você conta com benefícios e vantagens exclusivas para transformar sua experiência com a Super Cabo Multi!
+
+✨ BENEFÍCIOS DO PACOTE
+
+📶 ${vel} de Internet Fibra Óptica Conexão rápida, estável e confiável para trabalhar, estudar, assistir filmes, jogar online e muito mais.
+
+📺 ${canais} canais de TV no app Super Cabo Play Assista em até 3 telas simultâneas no nosso streaming exclusivo
+${blocoMais}⚡ APROVEITE AO MÁXIMO SUA VELOCIDADE!
+   Para utilizar toda a velocidade contratada, os dispositivos conectados (celulares, notebooks, Smart TVs etc.) precisam ser compatíveis com o plano.
+   Lembre-se também de que a velocidade é compartilhada entre todos os dispositivos conectados à rede.
+
+🔑 ATIVAÇÃO DOS APLICATIVOS DE STREAMING
+   Durante a visita técnica, tenha em mãos o e-mail e senha da sua conta.
+   ➡️ Sem esses dados, não será possível configurar os apps.
+   Se precisar recuperar sua senha, faça isso antes da visita.
+
+📺 INFORMAÇÃO SOBRE TVS
+   Nos novos planos, os canais de TV são disponibilizados exclusivamente pelo aplicativo Super Cabo Play, não mais por cabo.
+   Para utilizar o aplicativo diretamente na TV, ela precisa ser Smart e compatível com o Super Cabo Play.
+   Se a sua TV não for compatível, você pode optar pela compra ou aluguel de Smart Box, ou adquirir equipamento de terceiros homologados pela ANATEL.
+   Se quiser, posso te ajudar a verificar se o modelo da sua TV é compatível e também posso te passar os valores das opções de Smart Box.
+
+📌 CONDIÇÕES GERAIS  
+✅ Bonificação renovada por 12 meses.  
+⚠️ Cancelamentos nesse período têm multa proporcional de até R$ 500,00.  
+💳 Fatura digital enviada para seu e-mail e disponível no app Central do Assinante.  
+⏳ Pagamentos em atraso (+5 dias) podem bloquear o sinal.  
+🧾 Sua próxima fatura pode ter cobrança proporcional do plano antigo e do novo.  
+⚠️ Redução da velocidade do plano antes de completar 6 meses da contratação, será cobrada taxa de R$ 50,00.  
+⚠️ Redução da quantidade de canais antes de 6 meses da contratação, será cobrada taxa de R$ 50,00.
+
+💡 DICAS PARA MELHOR USO
+🧾 Use a Central do Assinante para faturas, pagamentos e serviços extras.
+📡 Para melhor qualidade, prefira cabo ou Wi-Fi 5GHz. O 2.4GHz é útil em áreas mais distantes do roteador.`;
+
+  document.getElementById('msgResultado').value = template;
+}
+
+function gerarTextoOS() {
+  const obs = document.getElementById('osObs').value.trim().toUpperCase() || '[INFORMAÇÃO ESPECÍFICA DA INSTALAÇÃO]';
+  const dataOS = document.getElementById('osData').value.trim().toUpperCase() || '[DATA]';
+  const vendedor = document.getElementById('osVendedor').value.trim().toUpperCase() || '[NOME]';
+  
+  let dataAgendamento = document.getElementById('osDataAgendamento').value.trim().toUpperCase();
+  let txtAgendamento = dataAgendamento ? dataAgendamento : '[DATA E TURNO, SE HOUVER]';
+  if (dataAgendamento && estadoToggles.osTurno) txtAgendamento += ` - ${estadoToggles.osTurno}`;
+
+  const solicitante = document.getElementById('osSolicitante').value.trim().toUpperCase() || '[NOME COMPLETO DO TITULAR]';
+  const planoAntigo = document.getElementById('osPlanoAntigo').value.trim().toUpperCase() || '[PLANO ATUAL]';
+  const precoAntigo = document.getElementById('osPrecoAntigo').value.trim().toUpperCase() || '[VALOR]';
+  const planoNovo = document.getElementById('osNovoPlano').value.trim().toUpperCase() || '[PLANO NOVO]';
+  const precoNovo = document.getElementById('osPrecoNovo').value.trim().toUpperCase() || '[VALOR]';
+  const instalar = document.getElementById('osInstalar').value.trim().toUpperCase() || '[EQUIPAMENTOS A INSTALAR]';
+  const recolher = document.getElementById('osRecolher').value.trim().toUpperCase() || '[EQUIPAMENTOS A RECOLHER / NADA A RECOLHER]';
+  const tel = document.getElementById('osTel').value.trim().toUpperCase() || '[NÚMERO]';
+  const email = document.getElementById('osEmail').value.trim().toLowerCase() || '[e-mail]';
+
+  let servicosArr = []; let appsArr = [];
+  document.querySelectorAll('.os-check:checked').forEach(cb => {
+    if(cb.dataset.tipo === 'servico') servicosArr.push(cb.value.toUpperCase()); else appsArr.push(cb.value.toUpperCase());
+  });
+
+  let configLinha = "";
+  if (servicosArr.length === 0 && appsArr.length > 0) configLinha = `CONFIGURAR: APLICATIVOS: ${appsArr.join(' / ')}`;
+  else if (servicosArr.length > 0 && appsArr.length === 0) configLinha = `CONFIGURAR: ${servicosArr.join(' / ')}`;
+  else if (servicosArr.length > 0 && appsArr.length > 0) configLinha = `CONFIGURAR: ${servicosArr.join(' / ')} | APLICATIVOS: ${appsArr.join(' / ')}`;
+  else configLinha = `CONFIGURAR: NADA A CONFIGURAR`;
+
+  const textoFinal = `OBS.: ${obs}
+ALTERAÇÃO DE PLANO REALIZADA POR: ${estadoToggles.osCanal} – ${dataOS} | VENDEDOR: ${vendedor}
+DATA DE AGENDAMENTO: ${txtAgendamento}
+SOLICITANTE: ${solicitante}
+ALTERAÇÃO DE PLANO: ${planoAntigo} ${precoAntigo} PARA ${planoNovo} ${precoNovo}
+INSTALAR: ${instalar}
+RECOLHER: ${recolher}
+${configLinha}
+TEL.: ${tel}
+E-MAIL: ${email}
+
+CIÊNCIA: CLIENTE CIENTE DAS CONDIÇÕES COMERCIAIS, BONIFICAÇÃO DE 12 MESES, TAXA DE DESCONEXÃO DE R$ 500,00 PROPORCIONAL AO TEMPO DE USO, TAXA DE R$ 50,00 PELA REDUÇÃO DE PLANO ANTES DE 6 MESES E NECESSIDADE DE EQUIPAMENTOS COMPATÍVEIS COM O SERVIÇO CONTRATADO`;
+
+  document.getElementById('osResultado').value = textoFinal;
+}
+
+/* ================= LÓGICA DE GERAÇÃO: TRANSFERÊNCIA ================= */
+function gerarTextoTransferencia() {
+  const nome = document.getElementById('transfNome').value.trim().toUpperCase() || '[NOME CLIENTE]';
+  const canal = estadoToggles.transfCanal;
+  const rua = document.getElementById('transfRua').value.trim().toUpperCase() || '[RUA]';
+  const num = document.getElementById('transfNum').value.trim().toUpperCase() || '[NUMERO]';
+  const comp = document.getElementById('transfComp').value.trim().toUpperCase();
+  const bairro = document.getElementById('transfBairro').value.trim().toUpperCase() || '[BAIRRO]';
+  const cep = document.getElementById('transfCep').value.trim().toUpperCase() || '[CEP]';
+
+  let linhaEndereco = `NOVO ENDEREÇO: ${rua} - ${num}`;
+  if (comp) linhaEndereco += `, ${comp}`;
+  linhaEndereco += `, BAIRRO ${bairro}. CEP: ${cep}`;
+
+  const textoFinal = `${nome} ENTROU EM CONTATO VIA ${canal} SOLICITANDO TRANSFERÊNCIA DE ENDEREÇO. REALIZADA CONFIRMAÇÃO DOS DADOS CADASTRAIS.
+${linhaEndereco}
+VERIFICADO QUE NÃO HAVIAM FATURAS EM ATRASO E NEM PONTOS ADICIONAIS VINCULADOS AO CONTRATO.
+CLIENTE FOI ORIENTADO QUE, ANTES DA NOVA INSTALAÇÃO, A CONEXÃO DO ENDEREÇO ANTIGO SERÁ DESCONECTADA.
+ORIENTADO TAMBÉM A LEVAR OS EQUIPAMENTOS DE REDE PARA O NOVO ENDEREÇO.
+CIENTE DA NECESSIDADE DA PRESENÇA DE ALGUÉM MAIOR DE 18 ANOS NO LOCAL.`;
+
+  document.getElementById('transfResultado').value = textoFinal;
+}
+
+/* ================= LÓGICA DE GERAÇÃO: RETENÇÃO ================= */
+function gerarTextoRetencao() {
+  const classificacao = estadoToggles.retClassificacao;
+  const cidade = estadoToggles.retCidade;
+  const contrato = document.getElementById('retContrato').value.trim() || '[Contrato]';
+  const nome = document.getElementById('retNome').value.trim() || '[Nome do Cliente]';
+  const meio = estadoToggles.retMeio;
+  const protocolo = document.getElementById('retProtocolo').value.trim() || '[Protocolo]';
+  const tel = document.getElementById('retTel').value.trim() || '[Telefone]';
+  const motivo = document.getElementById('retMotivo').value.trim() || '[Descrição do motivo]';
+  
+  const d = new Date();
+  const dataHoje = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+
+  const textoFinal = `Classificação: ${classificacao}
+Cidade: ${cidade}
+Contrato: ${contrato}
+Nome do Cliente: ${nome}
+Meio de Contato: ${meio}
+Protocolo: ${protocolo}
+Telefone: ${tel}
+Motivo Principal: ${motivo}
+Data da Ocorrência: ${dataHoje}`;
+
+  document.getElementById('retResultado').value = textoFinal;
+}
+
+</script>
+</body>
+</html>
