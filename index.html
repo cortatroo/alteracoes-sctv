@@ -622,15 +622,8 @@ function gerarTextoRetencao() {
   const potCheck  = classificacao === 'POTENCIAL CANCELAMENTO' ? 'X' : ' ';
   const classTexto = `( ${infoCheck} ) Informação de Cancelamento  ( ${solCheck} ) Solicitação de Cancelamento  ( ${potCheck} ) Potencial Cancelamento`;
 
-  // Formatação em Checkbox para a Cidade
-  const vicCheck = cidade === 'VIÇOSA' ? 'X' : ' ';
-  const carCheck = cidade === 'CARATINGA' ? 'X' : ' ';
-  const teiCheck = cidade === 'TEIXEIRAS' ? 'X' : ' ';
-  const srtCheck = cidade === 'SANTA RITA' ? 'X' : ' ';
-  const cidadeTexto = `( ${vicCheck} ) Viçosa - ( ${carCheck} ) Caratinga - ( ${teiCheck} ) Teixeiras - ( ${srtCheck} ) Santa Rita`;
-
   const textoFinal = `Classificação: ${classTexto}
-Cidade: ${cidadeTexto}
+Cidade: ${cidade}
 Contrato: ${contrato}
 Nome do Cliente: ${nome}
 Meio de Contato: ${meio}
