@@ -52,9 +52,9 @@
   .form-group { display: flex; flex-direction: column; }
   label { font-size: 0.75rem; font-weight: 800; margin-bottom: 4px; color: #000; text-transform: uppercase; }
   
-  /* Inputs padrão em MAIÚSCULO, mas ignorar E-mails e Motivo/Resultado da Retenção */
-  input[type="text"]:not(#osEmail):not(#retMotivo),
-  textarea:not(#msgResultado):not(#osResultado):not(#retMotivo) {
+  /* Inputs padrão em MAIÚSCULO. Ignorar apenas o campo de Email e as caixas de resultado final */
+  input[type="text"]:not(#osEmail),
+  textarea:not(#msgResultado):not(#osResultado):not(#transfResultado):not(#retResultado) {
       text-transform: uppercase;
   }
 
@@ -309,7 +309,7 @@
 
     <div class="form-group">
       <label>Motivo Principal</label>
-      <textarea id="retMotivo" style="min-height: 80px; text-transform:none;" placeholder="Descreva o motivo do cancelamento ou potencial cancelamento..."></textarea>
+      <textarea id="retMotivo" style="min-height: 80px;" placeholder="Descreva o motivo do cancelamento ou potencial cancelamento..."></textarea>
     </div>
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; margin-top:20px;">
@@ -317,7 +317,7 @@
       <button class="btn btn-primary" onclick="gerarTextoRetencao()">⬇️ Gerar Texto Abaixo ⬇️</button>
     </div>
 
-    <textarea id="retResultado" style="min-height: 180px; font-family: monospace; font-size:0.85rem; margin-bottom:15px;"></textarea>
+    <textarea id="retResultado" style="min-height: 220px; font-family: monospace; font-size:0.85rem; margin-bottom:15px;"></textarea>
     
     <div style="display: flex; justify-content: flex-end;">
       <button class="btn-salvar" onclick="copiarTexto('retResultado')">Copiar Texto</button>
@@ -606,18 +606,31 @@ CIENTE DA NECESSIDADE DA PRESENÇA DE ALGUÉM MAIOR DE 18 ANOS NO LOCAL.`;
 function gerarTextoRetencao() {
   const classificacao = estadoToggles.retClassificacao;
   const cidade = estadoToggles.retCidade;
-  const contrato = document.getElementById('retContrato').value.trim() || '[Contrato]';
-  const nome = document.getElementById('retNome').value.trim() || '[Nome do Cliente]';
+  const contrato = document.getElementById('retContrato').value.trim() || '[CONTRATO]';
+  const nome = document.getElementById('retNome').value.trim().toUpperCase() || '[NOME DO CLIENTE]';
   const meio = estadoToggles.retMeio;
-  const protocolo = document.getElementById('retProtocolo').value.trim() || '[Protocolo]';
-  const tel = document.getElementById('retTel').value.trim() || '[Telefone]';
-  const motivo = document.getElementById('retMotivo').value.trim() || '[Descrição do motivo]';
+  const protocolo = document.getElementById('retProtocolo').value.trim() || '[PROTOCOLO]';
+  const tel = document.getElementById('retTel').value.trim() || '[TELEFONE]';
+  const motivo = document.getElementById('retMotivo').value.trim().toUpperCase() || '[DESCRIÇÃO DO MOTIVO]';
   
   const d = new Date();
   const dataHoje = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
 
-  const textoFinal = `Classificação: ${classificacao}
-Cidade: ${cidade}
+  // Formatação em Checkbox para a Classificação
+  const infoCheck = classificacao === 'INFORMAÇÃO DE CANCELAMENTO' ? 'X' : ' ';
+  const solCheck  = classificacao === 'SOLICITAÇÃO DE CANCELAMENTO' ? 'X' : ' ';
+  const potCheck  = classificacao === 'POTENCIAL CANCELAMENTO' ? 'X' : ' ';
+  const classTexto = `( ${infoCheck} ) Informação de Cancelamento  ( ${solCheck} ) Solicitação de Cancelamento  ( ${potCheck} ) Potencial Cancelamento`;
+
+  // Formatação em Checkbox para a Cidade
+  const vicCheck = cidade === 'VIÇOSA' ? 'X' : ' ';
+  const carCheck = cidade === 'CARATINGA' ? 'X' : ' ';
+  const teiCheck = cidade === 'TEIXEIRAS' ? 'X' : ' ';
+  const srtCheck = cidade === 'SANTA RITA' ? 'X' : ' ';
+  const cidadeTexto = `( ${vicCheck} ) Viçosa - ( ${carCheck} ) Caratinga - ( ${teiCheck} ) Teixeiras - ( ${srtCheck} ) Santa Rita`;
+
+  const textoFinal = `Classificação: ${classTexto}
+Cidade: ${cidadeTexto}
 Contrato: ${contrato}
 Nome do Cliente: ${nome}
 Meio de Contato: ${meio}
